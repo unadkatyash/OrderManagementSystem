@@ -23,6 +23,7 @@ namespace OrderManagementSystem.API.Pages.Orders
             Order.OrderItems.Add(new OrderItem());
         }
 
+        [HttpPost]
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)

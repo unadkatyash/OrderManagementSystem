@@ -4,9 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Order Management System</title>
+    @* <link href="/Pages/css/style.css" rel="stylesheet" /> *@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <style>
+        /* Status Colors */
         .status-pending { color: #ffc107; }
         .status-processing { color: #17a2b8; }
         .status-shipped { color: #28a745; }
@@ -14,13 +16,226 @@
         .status-delivered { color: #28a745; }
         .status-cancelled { color: #dc3545; }
         
+        /* Card Animations and Effects */
         .order-card {
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .order-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        /* Form Enhancements */
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        
+        .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 35px;
+            padding-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 25px;
+            height: calc(100% - 5px);
+            width: 3px;
+            background: linear-gradient(to bottom, #dee2e6, #f8f9fa);
+            border-radius: 2px;
+        }
+
+        .timeline-item.completed:not(:last-child)::before {
+            background: linear-gradient(to bottom, #28a745, #20c997);
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: #dee2e6;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.completed .timeline-marker {
+            background-color: #28a745;
+            transform: scale(1.1);
+        }
+
+        .timeline-content h6 {
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #343a40;
+        }
+
+        .timeline-content small {
+            color: #6c757d;
+            font-size: 13px;
+        }
+        
+        .timeline-item.completed .timeline-content h6 {
+            color: #28a745;
+        }
+        
+        /* Badge Enhancements */
+        .badge {
+            padding: 8px 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Table Enhancements */
+        .table {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .table thead th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @@keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Navbar Enhancements */
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease;
+        }
+        
+        /* Order Item Enhancements */
+        .order-item {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            border-left: 4px solid #007bff;
+        }
+        
+        .order-item:hover {
+            background-color: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Alert Enhancements */
+        .alert {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Mobile Responsiveness */
+        @@media (max-width: 768px) {
+            .timeline-item {
+                padding-left: 25px;
+            }
+            
+            .timeline-marker {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .order-card {
+                margin-bottom: 15px;
+            }
         }
     </style>
 </head>
@@ -37,12 +252,70 @@
         </div>
     </nav>
     
-    <main class="container mt-4">
+    <main class="container mt-4 fade-in">
         @RenderBody()
     </main>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // Global JavaScript functions
+        
+        // Show loading state
+        function showLoading(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span class="loading"></span> Loading...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+        }
+        
+        // Add fade-in animation to new elements
+        function addFadeInAnimation(element) {
+            element.classList.add('fade-in');
+        }
+        
+        // Success message toast
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${message}
+                <button type="button" class="btn-close float-end" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+        
+        // Error message toast
+        function showErrorToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-danger position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i> ${message}
+                <button type="button" class="btn-close float-end" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

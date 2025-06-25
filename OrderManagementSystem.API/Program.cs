@@ -24,7 +24,6 @@ builder.Services.AddSwaggerGen(c =>
             Email = "support@orderManagementSystem.com"
         }
     });
-
 });
 
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -32,7 +31,12 @@ builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
 builder.Services.AddHostedService<OrderProcessingService>();
 
 builder.Services.AddControllers();
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    // Configure Razor Pages routing
+    options.Conventions.AddPageRoute("/Orders/Index", "/Orders");
+    options.Conventions.AddPageRoute("/Orders/Index", "/"); // Set as default page
+});
 
 // Add CORS for API access
 builder.Services.AddCors(options =>
@@ -74,7 +78,8 @@ app.UseCors();
 app.MapControllers();
 app.MapRazorPages();
 
-// Ensure database is created
+app.MapGet("/", () => Results.Redirect("/Orders/Index"));
+
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<OrderContext>();
