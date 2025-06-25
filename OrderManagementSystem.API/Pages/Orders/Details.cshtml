@@ -1,0 +1,279 @@
+﻿@page "/Orders/Details/{id:int}"
+@model OrderManagementSystem.API.Pages.Orders.DetailsModel
+@{
+    ViewData["Title"] = $"Order #{Model.Order?.Id}";
+}
+
+@if (Model.Order == null)
+{
+    <div class="alert alert-danger">
+        <h4>Order Not Found</h4>
+        <p>The requested order could not be found.</p>
+        <a href="/" class="btn btn-primary">Back to Orders</a>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Order #@Model.Order.Id</h4>
+                    <span class="badge bg-@GetStatusColor(Model.Order.Status) fs-6">
+                        @Model.Order.Status
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Customer Information</h6>
+                            <p><strong>Name:</strong> @Model.Order.CustomerName</p>
+                            <p><strong>Email:</strong> @Model.Order.CustomerEmail</p>
+                            <p><strong>Address:</strong><br>@Model.Order.ShippingAddress</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Order Information</h6>
+                            <p><strong>Order Date:</strong> @Model.Order.OrderDate.ToString("MMM dd, yyyy HH:mm")</p>
+                            <p><strong>Total Amount:</strong> $@Model.Order.TotalAmount.ToString("F2")</p>
+                            @if (!string.IsNullOrEmpty(Model.Order.TrackingNumber))
+                            {
+                                <p><strong>Tracking Number:</strong> @Model.Order.TrackingNumber</p>
+                            }
+                            @if (Model.Order.ShippedDate.HasValue)
+                            {
+                                <p><strong>Shipped Date:</strong> @Model.Order.ShippedDate.Value.ToString("MMM dd, yyyy HH:mm")</p>
+                            }
+                            @if (Model.Order.DeliveredDate.HasValue)
+                            {
+                                <p><strong>Delivered Date:</strong> @Model.Order.DeliveredDate.Value.ToString("MMM dd, yyyy HH:mm")</p>
+                            }
+                        </div>
+                    </div>
+
+                    <h6 class="mt-4">Order Items</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Order.OrderItems)
+                                {
+                                    <tr>
+                                        <td>@item.ProductName</td>
+                                        <td>@item.Quantity</td>
+                                        <td>$@item.UnitPrice.ToString("F2")</td>
+                                        <td>$@((item.Quantity * item.UnitPrice).ToString("F2"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-dark">
+                                    <th colspan="3">Total</th>
+                                    <th>$@Model.Order.TotalAmount.ToString("F2")</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6>Order Status Timeline</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item @(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.Pending ? "completed" : "")">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6>Order Placed</h6>
+                                <small>@Model.Order.OrderDate.ToString("MMM dd, yyyy HH:mm")</small>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item @(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.Processing ? "completed" : "")">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6>Processing</h6>
+                                <small>@(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.Processing ? "In Progress" : "Pending")</small>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item @(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.Shipped ? "completed" : "")">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6>Shipped</h6>
+                                <small>
+                                    @if (Model.Order.ShippedDate.HasValue)
+                                    {
+                                        @Model.Order.ShippedDate.Value.ToString("MMM dd, yyyy HH:mm")
+                                    }
+                                    else
+                                    {
+                                        @(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.Shipped ? "Processing" : "Pending")
+                                    }
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item @(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.InTransit ? "completed" : "")">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6>In Transit</h6>
+                                <small>@(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.InTransit ? "On the way" : "Pending")</small>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item @(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.Delivered ? "completed" : "")">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6>Delivered</h6>
+                                <small>
+                                    @if (Model.Order.DeliveredDate.HasValue)
+                                    {
+                                        @Model.Order.DeliveredDate.Value.ToString("MMM dd, yyyy HH:mm")
+                                    }
+                                    else
+                                    {
+                                        @(Model.Order.Status >= OrderManagementSystem.API.Models.OrderStatus.Delivered ? "Delivered" : "Pending")
+                                    }
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6>Actions</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.Order.Status == OrderManagementSystem.API.Models.OrderStatus.Pending)
+                    {
+                        <button class="btn btn-success btn-sm w-100 mb-2" onclick="updateStatus(@Model.Order.Id, 1)">
+                            <i class="fas fa-play"></i> Start Processing
+                        </button>
+                    }
+
+                    @if (Model.Order.Status != OrderManagementSystem.API.Models.OrderStatus.Delivered && Model.Order.Status != OrderManagementSystem.API.Models.OrderStatus.Cancelled)
+                    {
+                        <button class="btn btn-danger btn-sm w-100" onclick="updateStatus(@Model.Order.Id, 5)">
+                            <i class="fas fa-times"></i> Cancel Order
+                        </button>
+                    }
+
+                    <a href="/" class="btn btn-secondary btn-sm w-100 mt-2">
+                        <i class="fas fa-arrow-left"></i> Back to Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    private string GetStatusColor(OrderManagementSystem.API.Models.OrderStatus status)
+    {
+        return status switch
+        {
+            OrderManagementSystem.API.Models.OrderStatus.Pending => "warning",
+            OrderManagementSystem.API.Models.OrderStatus.Processing => "info",
+            OrderManagementSystem.API.Models.OrderStatus.Shipped => "success",
+            OrderManagementSystem.API.Models.OrderStatus.InTransit => "primary",
+            OrderManagementSystem.API.Models.OrderStatus.Delivered => "success",
+            OrderManagementSystem.API.Models.OrderStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        async function updateStatus(orderId, status) {
+            if (!confirm('Are you sure you want to update this order status?')) return;
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(status)
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            } catch (error) {
+                alert('Error updating order status');
+            }
+        }
+
+        // Auto-refresh every 10 seconds for real-time updates
+        setInterval(() => {
+            location.reload();
+        }, 10000);
+    </script>
+
+    <style>
+        .timeline {
+            position: relative;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 30px;
+            padding-bottom: 20px;
+        }
+
+            .timeline-item:not(:last-child)::before {
+                content: '';
+                position: absolute;
+                left: 8px;
+                top: 20px;
+                height: 100%;
+                width: 2px;
+                background-color: #dee2e6;
+            }
+
+            .timeline-item.completed:not(:last-child)::before {
+                background-color: #28a745;
+            }
+
+        .timeline-marker {
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #dee2e6;
+            border: 2px solid #fff;
+        }
+
+        .timeline-item.completed .timeline-marker {
+            background-color: #28a745;
+        }
+
+        .timeline-content h6 {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .timeline-content small {
+            color: #6c757d;
+            font-size: 12px;
+        }
+    </style>
+}

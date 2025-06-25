@@ -1,0 +1,127 @@
+﻿@model OrderManagementSystem.API.Pages.Orders.IndexModel
+@page
+@{
+    Response.Redirect("/Orders");
+}
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-list"></i> Orders</h2>
+    <a href="/Orders/Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New Order
+    </a>
+</div>
+
+<div class="row" id="orders-container">
+    @if (Model.Orders?.Any() == true)
+    {
+        @foreach (var order in Model.Orders)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card order-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Order #@order.Id</h6>
+                        <span class="badge bg-@GetStatusColor(order.Status)">
+                            @order.Status
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">@order.CustomerName</h6>
+                        <p class="card-text text-muted">@order.CustomerEmail</p>
+                        <p class="card-text">
+                            <strong>Amount:</strong> $@order.TotalAmount.ToString("F2")<br>
+                            <strong>Date:</strong> @order.OrderDate.ToString("MMM dd, yyyy")
+                        </p>
+                        @if (!string.IsNullOrEmpty(order.TrackingNumber))
+                        {
+                            <p class="card-text">
+                                <strong>Tracking:</strong> @order.TrackingNumber
+                            </p>
+                        }
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100" role="group">
+                            <a href="/Orders/Details/@order.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            @if (order.Status == OrderManagementSystem.API.Models.OrderStatus.Pending)
+                            {
+                                <button class="btn btn-sm btn-outline-success" onclick="updateStatus(@order.Id, 1)">
+                                    <i class="fas fa-play"></i> Process
+                                </button>
+                            }
+                            @if (order.Status != OrderManagementSystem.API.Models.OrderStatus.Delivered && order.Status != OrderManagementSystem.API.Models.OrderStatus.Cancelled)
+                            {
+                                <button class="btn btn-sm btn-outline-danger" onclick="updateStatus(@order.Id, 5)">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No orders found</h4>
+                <p class="text-muted">Create your first order to get started</p>
+                <a href="/Orders/Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Order
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    private string GetStatusColor(OrderManagementSystem.API.Models.OrderStatus status)
+    {
+        return status switch
+        {
+            OrderManagementSystem.API.Models.OrderStatus.Pending => "warning",
+            OrderManagementSystem.API.Models.OrderStatus.Processing => "info",
+            OrderManagementSystem.API.Models.OrderStatus.Shipped => "success",
+            OrderManagementSystem.API.Models.OrderStatus.InTransit => "primary",
+            OrderManagementSystem.API.Models.OrderStatus.Delivered => "success",
+            OrderManagementSystem.API.Models.OrderStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        async function updateStatus(orderId, status) {
+            if (!confirm('Are you sure you want to update this order status?')) return;
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(status)
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            } catch (error) {
+                alert('Error updating order status');
+            }
+        }
+
+        // Auto-refresh every 30 seconds to show real-time updates
+        setInterval(() => {
+            location.reload();
+        }, 30000);
+    </script>
+}
