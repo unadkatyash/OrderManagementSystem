@@ -24,7 +24,7 @@
                                     <label asp-for="CustomerName" class="form-label">
                                         <i class="fas fa-user"></i> Customer Name
                                     </label>
-                                    <input asp-for="CustomerName" class="form-control" required />
+                                    <input asp-for="CustomerName" class="form-control" name="Order.CustomerName" required />
                                     <span asp-validation-for="CustomerName" class="text-danger"></span>
                                 </div>
                             </div>
@@ -33,7 +33,7 @@
                                     <label asp-for="CustomerEmail" class="form-label">
                                         <i class="fas fa-envelope"></i> Customer Email
                                     </label>
-                                    <input asp-for="CustomerEmail" type="email" class="form-control" required />
+                                    <input asp-for="CustomerEmail" type="email" name="Order.CustomerEmail" class="form-control" required />
                                     <span asp-validation-for="CustomerEmail" class="text-danger"></span>
                                 </div>
                             </div>
@@ -43,7 +43,7 @@
                             <label asp-for="ShippingAddress" class="form-label">
                                 <i class="fas fa-map-marker-alt"></i> Shipping Address
                             </label>
-                            <textarea asp-for="ShippingAddress" class="form-control" rows="3" required></textarea>
+                            <textarea asp-for="ShippingAddress" name="Order.ShippingAddress" class="form-control" rows="3" required></textarea>
                             <span asp-validation-for="ShippingAddress" class="text-danger"></span>
                         </div>
                     </div>
@@ -128,35 +128,34 @@
             const newItem = document.createElement('div');
             newItem.className = 'order-item slide-in';
             newItem.innerHTML = `
-                        <input type="hidden" name="Order.OrderItems.Index" value="${itemIndex}" />
-                        <div class="row">
-                            <div class="col-5">
-                                <div class="mb-2">
-                                    <label class="form-label small">Product Name</label>
-                                    <input name="Order.OrderItems[${itemIndex}].ProductName" class="form-control" required />
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="mb-2">
-                                    <label class="form-label small">Quantity</label>
-                                    <input name="Order.OrderItems[${itemIndex}].Quantity" type="number" class="form-control" min="1" required oninput="calculateTotal()" />
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="mb-2">
-                                    <label class="form-label small">Unit Price ($)</label>
-                                    <input name="Order.OrderItems[${itemIndex}].UnitPrice" type="number" step="0.01" class="form-control" min="0" required oninput="calculateTotal()" />
-                                </div>
-                            </div>
-                            <div class="col-1 d-flex align-items-end">
-                                <button type="button" class="btn btn-outline-danger btn-sm mb-2" onclick="removeItem(this)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>`;
+                                <input type="hidden" name="Order.OrderItems.Index" value="${itemIndex}" />
+                                <div class="row">
+                                    <div class="col-5">
+                                        <div class="mb-2">
+                                            <label class="form-label small">Product Name</label>
+                                            <input name="Order.OrderItems[${itemIndex}].ProductName" class="form-control" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="mb-2">
+                                            <label class="form-label small">Quantity</label>
+                                            <input name="Order.OrderItems[${itemIndex}].Quantity" type="number" class="form-control" min="1" required oninput="calculateTotal()" />
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="mb-2">
+                                            <label class="form-label small">Unit Price ($)</label>
+                                            <input name="Order.OrderItems[${itemIndex}].UnitPrice" type="number" step="0.01" class="form-control" min="0" required oninput="calculateTotal()" />
+                                        </div>
+                                    </div>
+                                    <div class="col-1 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm mb-2" onclick="removeItem(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>`;
             container.appendChild(newItem);
             itemIndex++;
-            addFadeInAnimation(newItem);
             calculateTotal();
         }
 
@@ -170,45 +169,76 @@
                     calculateTotal();
                 }, 300);
             } else {
-                showErrorToast('At least one item is required.');
+                alert('At least one item is required.');
             }
         }
 
         function calculateTotal() {
             const items = document.querySelectorAll('.order-item');
             let totalItems = 0, totalAmount = 0;
+
             items.forEach(item => {
-                const q = parseFloat(item.querySelector('input[name*="Quantity"]').value) || 0;
-                const p = parseFloat(item.querySelector('input[name*="UnitPrice"]').value) || 0;
+                const quantityInput = item.querySelector('input[name*="Quantity"]');
+                const priceInput = item.querySelector('input[name*="UnitPrice"]');
+
+                const q = parseFloat(quantityInput?.value) || 0;
+                const p = parseFloat(priceInput?.value) || 0;
+
                 totalItems += q;
                 totalAmount += q * p;
             });
+
             document.getElementById('total-items').textContent = totalItems;
             document.getElementById('total-amount').textContent = '$' + totalAmount.toFixed(2);
         }
 
         function validateForm() {
-            let valid = false;
-            document.querySelectorAll('.order-item').forEach(item => {
-                const name = item.querySelector('input[name*="ProductName"]').value.trim();
-                const q = +item.querySelector('input[name*="Quantity"]').value;
-                const p = +item.querySelector('input[name*="UnitPrice"]').value;
-                if (name && q > 0 && p > 0) valid = true;
+            let hasValidItem = false;
+            const items = document.querySelectorAll('.order-item');
+
+            const customerName = document.querySelector('input[name="CustomerName"]').value.trim();
+            const customerEmail = document.querySelector('input[name="CustomerEmail"]').value.trim();
+            const shippingAddress = document.querySelector('textarea[name="ShippingAddress"]').value.trim();
+
+            if (!customerName || !customerEmail || !shippingAddress) {
+                alert('Please fill in all customer information.');
+                return false;
+            }
+
+            items.forEach(item => {
+                const name = item.querySelector('input[name*="ProductName"]')?.value.trim();
+                const q = parseFloat(item.querySelector('input[name*="Quantity"]')?.value) || 0;
+                const p = parseFloat(item.querySelector('input[name*="UnitPrice"]')?.value) || 0;
+
+                if (name && q > 0 && p > 0) {
+                    hasValidItem = true;
+                }
             });
-            if (!valid) showErrorToast('Please add at least one valid item.');
-            return valid;
+
+            if (!hasValidItem) {
+                alert('Please add at least one valid item with product name, quantity > 0, and price > 0.');
+                return false;
+            }
+            return true;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             calculateTotal();
-            document.querySelectorAll('input[name*="Quantity"], input[name*="UnitPrice"]').forEach(i => {
-                i.addEventListener('input', calculateTotal);
-            });
-        });
 
-        document.getElementById('orderForm').addEventListener('submit', e => {
-            if (!validateForm()) e.preventDefault();
-            else showLoading(document.getElementById('submitBtn'));
+            document.querySelectorAll('input[name*="Quantity"], input[name*="UnitPrice"]').forEach(input => {
+                input.addEventListener('input', calculateTotal);
+            });
+
+            document.getElementById('orderForm').addEventListener('submit', function (e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Order...';
+            });
         });
     </script>
     <style>

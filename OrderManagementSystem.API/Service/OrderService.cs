@@ -27,7 +27,6 @@ namespace OrderManagementSystem.API.Service
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Publish order created event
             var orderEvent = new OrderEvent
             {
                 OrderId = order.Id,
@@ -37,7 +36,6 @@ namespace OrderManagementSystem.API.Service
             };
 
             _rabbitMQ.PublishOrderEvent("order.created", orderEvent);
-            _logger.LogInformation($"Order {order.Id} created successfully");
 
             return order;
         }
@@ -76,7 +74,6 @@ namespace OrderManagementSystem.API.Service
 
             await _context.SaveChangesAsync();
 
-            // Publish status update event
             var orderEvent = new OrderEvent
             {
                 OrderId = order.Id,
@@ -94,10 +91,8 @@ namespace OrderManagementSystem.API.Service
         {
             await UpdateOrderStatusAsync(orderId, OrderStatus.Processing);
 
-            // Simulate processing time
-            await Task.Delay(2000);
+            await Task.Delay(10000);
 
-            // Auto-ship after processing
             _rabbitMQ.PublishOrderEvent("order.ready.to.ship", new { OrderId = orderId });
         }
 
@@ -105,13 +100,10 @@ namespace OrderManagementSystem.API.Service
         {
             await UpdateOrderStatusAsync(orderId, OrderStatus.Shipped);
 
-            // Simulate shipping time
-            await Task.Delay(1000);
+            await Task.Delay(10000);
 
-            // Set to in-transit
             await UpdateOrderStatusAsync(orderId, OrderStatus.InTransit);
 
-            // Schedule delivery
             _rabbitMQ.PublishOrderEvent("order.in.transit", new { OrderId = orderId });
         }
 

@@ -260,11 +260,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
-        // Global JavaScript functions
         
-        // Show loading state
         function showLoading(button) {
-            console.log("Loadding......")
             const originalText = button.innerHTML;
             button.innerHTML = '<span class="loading"></span> Loading...';
             button.disabled = true;
@@ -275,12 +272,10 @@
             }, 2000);
         }
         
-        // Add fade-in animation to new elements
         function addFadeInAnimation(element) {
             element.classList.add('fade-in');
         }
         
-        // Success message toast
         function showSuccessToast(message) {
             const toast = document.createElement('div');
             toast.className = 'alert alert-success position-fixed';
@@ -298,7 +293,6 @@
             }, 5000);
         }
         
-        // Error message toast
         function showErrorToast(message) {
             const toast = document.createElement('div');
             toast.className = 'alert alert-danger position-fixed';

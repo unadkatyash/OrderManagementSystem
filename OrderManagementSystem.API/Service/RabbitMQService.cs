@@ -17,7 +17,7 @@ namespace OrderManagementSystem.API.Service
             _logger = logger;
             var factory = new ConnectionFactory()
             {
-                HostName = "localhost", // Configure as needed
+                HostName = "localhost",
                 UserName = "guest",
                 Password = "guest"
             };
@@ -33,7 +33,6 @@ namespace OrderManagementSystem.API.Service
                 var json = JsonSerializer.Serialize(message);
                 var body = Encoding.UTF8.GetBytes(json);
                 _channel.BasicPublish(exchange: "", routingKey: queueName, body: body);
-                _logger.LogInformation($"Published message to {queueName}: {json}");
             }
             catch (Exception ex)
             {
@@ -58,12 +57,10 @@ namespace OrderManagementSystem.API.Service
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"Error processing message: {message}");
                         _channel.BasicNack(deliveryTag: ea.DeliveryTag, multiple: false, requeue: true);
                     }
                 };
                 _channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
-                _logger.LogInformation($"Started consuming from {queueName}");
             }
             catch (Exception ex)
             {

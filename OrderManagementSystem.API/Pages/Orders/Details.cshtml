@@ -3,6 +3,7 @@
 @model OrderManagementSystem.API.Pages.Orders.DetailsModel
 @{
     ViewData["Title"] = $"Order #{Model.Order?.Id}";
+    Layout = "_Layout";       
 }
 
 @if (Model.Order == null)
@@ -35,7 +36,7 @@ else
                         <div class="col-md-6">
                             <h6>Order Information</h6>
                             <p><strong>Order Date:</strong> @Model.Order.OrderDate.ToString("MMM dd, yyyy HH:mm")</p>
-                            <p><strong>Total Amount:</strong> $@Model.Order.TotalAmount.ToString("F2")</p>
+                            <p><strong>Total Amount:</strong> $ @Model.Order.TotalAmount.ToString("F2")</p>
                             @if (!string.IsNullOrEmpty(Model.Order.TrackingNumber))
                             {
                                 <p><strong>Tracking Number:</strong> @Model.Order.TrackingNumber</p>
@@ -68,15 +69,15 @@ else
                                     <tr>
                                         <td>@item.ProductName</td>
                                         <td>@item.Quantity</td>
-                                        <td>$@item.UnitPrice.ToString("F2")</td>
-                                        <td>$@((item.Quantity * item.UnitPrice).ToString("F2"))</td>
+                                        <td>$ @item.UnitPrice.ToString("F2")</td>
+                                        <td>$ @((item.Quantity * item.UnitPrice).ToString("F2"))</td>
                                     </tr>
                                 }
                             </tbody>
                             <tfoot>
                                 <tr class="table-dark">
                                     <th colspan="3">Total</th>
-                                    <th>$@Model.Order.TotalAmount.ToString("F2")</th>
+                                    <th>$ @Model.Order.TotalAmount.ToString("F2")</th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -113,8 +114,7 @@ else
                             <div class="timeline-content">
                                 <h6>Shipped</h6>
                                 <small>
-                                    @Model.Order.ShippedDate?.ToString("MMM dd, yyyy HH:mm") ??
-                                    (Model.Order.Status >= OrderStatus.Shipped ? "Processing" : "Pending")
+                                    @Model.Order.ShippedDate?.ToString("MMM dd, yyyy HH:mm") @((Model.Order.Status >= OrderStatus.Shipped ? "Processing" : "Pending"))
                                 </small>
                             </div>
                         </div>
@@ -132,8 +132,7 @@ else
                             <div class="timeline-content">
                                 <h6>Delivered</h6>
                                 <small>
-                                    @Model.Order.DeliveredDate?.ToString("MMM dd, yyyy HH:mm") ??
-                                    (Model.Order.Status >= OrderStatus.Delivered ? "Delivered" : "Pending")
+                                    @Model.Order.DeliveredDate?.ToString("MMM dd, yyyy HH:mm") @((Model.Order.Status >= OrderStatus.Delivered? "Delivered" : "Pending"))
                                 </small>
                             </div>
                         </div>
