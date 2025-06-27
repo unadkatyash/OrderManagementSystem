@@ -33,7 +33,24 @@ namespace OrderManagementSystem.API.Service
             using var scope = _serviceProvider.CreateScope();
             var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
 
+            // Check if order is still valid before processing
+            var order = await orderService.GetOrderAsync(orderEvent.OrderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderEvent.OrderId} is cancelled or not found. Skipping processing.");
+                return;
+            }
+
             await Task.Delay(10000);
+
+            // Check again after delay in case it was cancelled during processing
+            order = await orderService.GetOrderAsync(orderEvent.OrderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderEvent.OrderId} was cancelled during processing. Stopping workflow.");
+                return;
+            }
+
             await orderService.ProcessOrderAsync(orderEvent.OrderId);
         }
 
@@ -45,7 +62,24 @@ namespace OrderManagementSystem.API.Service
             using var scope = _serviceProvider.CreateScope();
             var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
 
+            // Check if order is still valid before shipping
+            var order = await orderService.GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} is cancelled or not found. Skipping shipping.");
+                return;
+            }
+
             await Task.Delay(10000);
+
+            // Check again after delay
+            order = await orderService.GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} was cancelled during shipping preparation. Stopping workflow.");
+                return;
+            }
+
             await orderService.ShipOrderAsync(orderId);
         }
 
@@ -57,7 +91,24 @@ namespace OrderManagementSystem.API.Service
             using var scope = _serviceProvider.CreateScope();
             var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
 
+            // Check if order is still valid before delivery
+            var order = await orderService.GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} is cancelled or not found. Skipping delivery.");
+                return;
+            }
+
             await Task.Delay(10000);
+
+            // Check again after delay
+            order = await orderService.GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} was cancelled during transit. Stopping workflow.");
+                return;
+            }
+
             await orderService.DeliverOrderAsync(orderId);
         }
     }

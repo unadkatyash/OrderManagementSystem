@@ -60,6 +60,19 @@ namespace OrderManagementSystem.API.Service
             var order = await GetOrderAsync(id);
             if (order == null) return null;
 
+            // Prevent status updates if order is already cancelled or delivered
+            if (order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogWarning($"Cannot update status for cancelled order {id}");
+                return order;
+            }
+
+            if (order.Status == OrderStatus.Delivered && status != OrderStatus.Cancelled)
+            {
+                _logger.LogWarning($"Cannot update status for delivered order {id}");
+                return order;
+            }
+
             order.Status = status;
 
             if (status == OrderStatus.Shipped && order.ShippedDate == null)
@@ -70,6 +83,12 @@ namespace OrderManagementSystem.API.Service
             else if (status == OrderStatus.Delivered && order.DeliveredDate == null)
             {
                 order.DeliveredDate = DateTime.UtcNow;
+            }
+            else if (status == OrderStatus.Cancelled)
+            {
+                // Clear shipping/delivery dates if cancelled
+                order.ShippedDate = null;
+                order.DeliveredDate = null;
             }
 
             await _context.SaveChangesAsync();
@@ -89,18 +108,50 @@ namespace OrderManagementSystem.API.Service
 
         public async Task ProcessOrderAsync(int orderId)
         {
+            // Check if order is still valid before processing
+            var order = await GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} is cancelled or not found. Cannot process.");
+                return;
+            }
+
             await UpdateOrderStatusAsync(orderId, OrderStatus.Processing);
 
             await Task.Delay(10000);
+
+            // Check again after delay to make sure it wasn't cancelled during processing
+            order = await GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} was cancelled during processing. Stopping workflow.");
+                return;
+            }
 
             _rabbitMQ.PublishOrderEvent("order.ready.to.ship", new { OrderId = orderId });
         }
 
         public async Task ShipOrderAsync(int orderId)
         {
+            // Check if order is still valid before shipping
+            var order = await GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} is cancelled or not found. Cannot ship.");
+                return;
+            }
+
             await UpdateOrderStatusAsync(orderId, OrderStatus.Shipped);
 
             await Task.Delay(10000);
+
+            // Check again after delay
+            order = await GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} was cancelled during shipping. Stopping workflow.");
+                return;
+            }
 
             await UpdateOrderStatusAsync(orderId, OrderStatus.InTransit);
 
@@ -109,6 +160,14 @@ namespace OrderManagementSystem.API.Service
 
         public async Task DeliverOrderAsync(int orderId)
         {
+            // Check if order is still valid before delivery
+            var order = await GetOrderAsync(orderId);
+            if (order == null || order.Status == OrderStatus.Cancelled)
+            {
+                _logger.LogInformation($"Order {orderId} is cancelled or not found. Cannot deliver.");
+                return;
+            }
+
             await UpdateOrderStatusAsync(orderId, OrderStatus.Delivered);
         }
 

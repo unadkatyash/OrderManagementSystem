@@ -3,7 +3,7 @@
 @model OrderManagementSystem.API.Pages.Orders.DetailsModel
 @{
     ViewData["Title"] = $"Order #{Model.Order?.Id}";
-    Layout = "_Layout";       
+    Layout = "_Layout";
 }
 
 @if (Model.Order == null)
@@ -92,8 +92,9 @@ else
                     <h6>Order Status Timeline</h6>
                 </div>
                 <div class="card-body">
-                    <div class="timeline">
-                        <div class="timeline-item @(Model.Order.Status >= OrderStatus.Pending ? "completed" : "")">
+                    <div class="timeline @(Model.Order.Status == OrderStatus.Cancelled ? "cancelled" : "")">
+                        <!-- Step 1: Order Placed (Always completed - GREEN) -->
+                        <div class="timeline-item completed">
                             <div class="timeline-marker"></div>
                             <div class="timeline-content">
                                 <h6>Order Placed</h6>
@@ -101,41 +102,89 @@ else
                             </div>
                         </div>
 
-                        <div class="timeline-item @(Model.Order.Status >= OrderStatus.Processing ? "completed" : "")">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <h6>Processing</h6>
-                                <small>@(Model.Order.Status >= OrderStatus.Processing ? "In Progress" : "Pending")</small>
+                        @if (Model.Order.Status == OrderStatus.Cancelled)
+                        {
+                            <!-- Step 2: Order Cancelled (RED) -->
+                            <div class="timeline-item cancelled">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>Order Cancelled</h6>
+                                    <small class="text-danger">Order was cancelled</small>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="timeline-item @(Model.Order.Status >= OrderStatus.Shipped ? "completed" : "")">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <h6>Shipped</h6>
-                                <small>
-                                    @Model.Order.ShippedDate?.ToString("MMM dd, yyyy HH:mm") @((Model.Order.Status >= OrderStatus.Shipped ? "Processing" : "Pending"))
-                                </small>
+                            <!-- Remaining steps (GREY - Disabled) -->
+                            <div class="timeline-item disabled">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>Processing</h6>
+                                    <small>Cancelled</small>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="timeline-item @(Model.Order.Status >= OrderStatus.InTransit ? "completed" : "")">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <h6>In Transit</h6>
-                                <small>@(Model.Order.Status >= OrderStatus.InTransit ? "On the way" : "Pending")</small>
+                            <div class="timeline-item disabled">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>Shipped</h6>
+                                    <small>Cancelled</small>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="timeline-item @(Model.Order.Status >= OrderStatus.Delivered ? "completed" : "")">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <h6>Delivered</h6>
-                                <small>
-                                    @Model.Order.DeliveredDate?.ToString("MMM dd, yyyy HH:mm") @((Model.Order.Status >= OrderStatus.Delivered? "Delivered" : "Pending"))
-                                </small>
+                            <div class="timeline-item disabled">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>In Transit</h6>
+                                    <small>Cancelled</small>
+                                </div>
                             </div>
-                        </div>
+
+                            <div class="timeline-item disabled">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>Delivered</h6>
+                                    <small>Cancelled</small>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Normal progression for non-cancelled orders -->
+                            <div class="timeline-item @(Model.Order.Status >= OrderStatus.Processing ? "completed" : "")">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>Processing</h6>
+                                    <small>@(Model.Order.Status >= OrderStatus.Processing ? "In Progress" : "Pending")</small>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item @(Model.Order.Status >= OrderStatus.Shipped ? "completed" : "")">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>Shipped</h6>
+                                    <small>
+                                        @Model.Order.ShippedDate?.ToString("MMM dd, yyyy HH:mm") @((Model.Order.Status >= OrderStatus.Shipped ? "Processing" : "Pending"))
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item @(Model.Order.Status >= OrderStatus.InTransit ? "completed" : "")">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>In Transit</h6>
+                                    <small>@(Model.Order.Status >= OrderStatus.InTransit ? "On the way" : "Pending")</small>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item @(Model.Order.Status >= OrderStatus.Delivered ? "completed" : "")">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6>Delivered</h6>
+                                    <small>
+                                        @Model.Order.DeliveredDate?.ToString("MMM dd, yyyy HH:mm") @((Model.Order.Status >= OrderStatus.Delivered ? "Delivered" : "Pending"))
+                                    </small>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -207,6 +256,65 @@ else
 
         setInterval(() => {
             location.reload();
-        }, 10000);
+        }, 5000);
     </script>
+    <style>
+        .timeline.cancelled .timeline-item.cancelled:not(:last-child)::before {
+            background: #dc3545;
+        }
+
+        .timeline.cancelled .timeline-item.disabled:not(:last-child)::before {
+            background: #dee2e6;
+        }
+
+        .timeline.cancelled .timeline-item.cancelled .timeline-marker {
+            background: #dc3545;
+        }
+
+        .timeline.cancelled .timeline-item.disabled .timeline-marker {
+            background: #dee2e6;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline.cancelled .timeline-item.cancelled .timeline-content {
+            border-left-color: #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .timeline.cancelled .timeline-item.disabled .timeline-content {
+            border-left-color: #dee2e6;
+            background-color: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .timeline.cancelled .timeline-item.cancelled .timeline-content h6 {
+            color: #dc3545;
+        }
+
+        .timeline.cancelled .timeline-item.disabled .timeline-content h6 {
+            color: #6c757d;
+        }
+
+        .timeline.cancelled .timeline-item.disabled .timeline-content small {
+            color: #6c757d;
+        }
+
+        @@media (max-width: 768px) {
+            .timeline .timeline-item:not(:last-child)::before {
+                left: -1.25rem;
+                width: 2px;
+            }
+
+            .timeline-marker {
+                left: -1.75rem;
+                width: 16px;
+                height: 16px;
+            }
+
+            .timeline.cancelled .timeline-item.cancelled .timeline-marker::after {
+                font-size: 8px;
+            }
+        }
+
+    </style>
 }
